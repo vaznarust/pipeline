@@ -1,0 +1,35 @@
+# Talend CI/CD on Azure DevOps
+# Build Pipeline for building and publishing on Talend Cloud
+trigger: none
+pool:
+vmImage: 'ubuntu-latest'
+variables:
+- group: Talend Configuration
+- name: project_name
+ value: 'AZUREPIPELINE'
+- name: job_name
+ value: 'joindatadb'
+- name: job_version
+ value: '0.1'
+steps:
+ - task: DownloadSecureFile@1
+ name: settings_xml
+ inputs:
+ secureFile: settings.xml
+ - task: DownloadSecureFile@1
+ name: license
+ inputs:
+ secureFile: license
+ - task: Maven@3
+ inputs:
+ mavenPomFile: '$(project_name)/poms/pom.xml'
+ mavenOptions:
+ -Dlicense.path=$(license.secureFilePath)
+ -Dupdatesite.path=$(UPDATESITE_PATH)
+ -Dservice.url=$(CLOUD_URL)
+ -Dcloud.token=$(CLOUD_TOKEN)
+ -Dcloud.publisher.screenshot=true
+ -Xmx3096m -Xmx1024m
+ options: '--settings $(settings_xml.secureFilePath) -Pcloud-publisher -
+pl jobs/process/$(job_name)_$(job_version) -am'
+ goals: 'deploy'
